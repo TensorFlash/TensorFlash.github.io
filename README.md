@@ -1,1 +1,941 @@
-# TensorFlash.github.io
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终末地动态供电-分流计算器</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #ca8a04;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+            color: var(--text-main);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .unit-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .preset-select {
+            background-color: #f9fafb;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #93c5fd; cursor: not-allowed; }
+
+        .result-area {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px dashed var(--border);
+            display: none;
+        }
+
+        .status-banner {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        .banner-safe {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .banner-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .final-expression {
+            font-family: "Times New Roman", serif;
+            font-size: 1.8rem;
+            color: var(--text-main);
+            text-align: center;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .details-box {
+            background-color: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 6px;
+            padding: 15px;
+            font-size: 0.9rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .detail-row:last-child { border-bottom: none; margin-bottom: 0; }
+        
+        .detail-label { color: var(--text-sub); }
+        .detail-val { font-family: monospace; font-weight: 600; color: var(--text-main); }
+
+        .error-msg {
+            color: var(--danger);
+            font-weight: bold;
+            background: #fef2f2;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #fee2e2;
+            text-align: center;
+        }
+
+        sup { font-size: 0.6em; margin-left: 1px; }
+
+        .chart-container {
+            margin-top: 20px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            overflow: hidden;
+        }
+        svg {
+            width: 100%;
+            height: 200px;
+            display: block;
+        }
+        .axis-line { stroke: #e5e7eb; stroke-width: 1; }
+        .chart-line { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linejoin: round; }
+        .chart-limit-line { stroke: var(--danger); stroke-width: 1; stroke-dasharray: 4,4; }
+
+        .custom-section {
+            margin-top: 20px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .custom-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .custom-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .node-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .node-input {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            width: auto;
+            margin: 0;
+        }
+        .btn-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .btn-danger:hover { background-color: #fecaca; }
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: var(--text-main);
+            border: 1px solid #e5e7eb;
+        }
+        .btn-secondary:hover { background-color: #e5e7eb; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>终末地动态供电-分流计算器</h1>
+
+        <div class="form-group">
+            <label>需求电量</label>
+            <input type="number" id="demandInput" step="any" placeholder="例如: 3400">
+        </div>
+
+        <div class="form-group">
+            <label>单位电量</label>
+            <div class="unit-group">
+                <select id="unitPreset" class="preset-select" onchange="applyPreset()">
+                    <option value="" disabled selected>-- 点击快速选择电池类型 --</option>
+                    <option value="1100">高容谷地电池 (1100)</option>
+                    <option value="1600">低容武陵电池 (1600)</option>
+                </select>
+                <input type="number" id="unitInput" placeholder="或手动输入数值">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>实际电量 <span style="font-weight:400; font-size:0.8em; color:#9ca3af">- 留空则默认等于需求</span></label>
+            <input type="number" id="actualInput" step="any" placeholder="参考上限">
+        </div>
+
+        <div class="form-group">
+            <label>最大计算时间 (秒)</label>
+            <input type="number" id="timeoutInput" value="3" placeholder="例如: 3">
+        </div>
+
+        <button onclick="calculate()" id="calcBtn">运行计算</button>
+
+        <div class="result-area" id="resultArea">
+            <div id="statusBanner" class="status-banner"></div>
+            <div id="outputExpr"></div>
+            <div id="detailsOutput"></div>
+            <div class="custom-section" id="customSection">
+                <div class="custom-header">
+                    <h3>自定义供电周期 (秒/节点)</h3>
+                    <button class="btn-sm btn-secondary" onclick="addNodeRow('')" style="width: auto;">+ 添加节点</button>
+                </div>
+                <div id="nodeList" class="node-list">
+                </div>
+                <button onclick="runCustomSimulation()" class="btn-sm" style="width:100%; margin-top:5px;">使用当前配置运行模拟</button>
+            </div>
+
+            <div class="chart-container" id="chartContainer" style="display:none;">
+                <h3 style="margin:0 0 10px 0; font-size:0.9rem; color:#6b7280; text-align:center;">核心电容模拟 (100k Max)</h3>
+                <svg id="chartSvg" viewBox="0 0 600 200"></svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function applyPreset() {
+            const preset = document.getElementById('unitPreset');
+            const input = document.getElementById('unitInput');
+            if (preset.value) {
+                input.value = preset.value;
+            }
+        }
+
+        function gcd(a, b) { return b === 0n ? a : gcd(b, a % b); }
+
+        function getDivisors(n) {
+            let divs = [];
+            let i = 1n;
+            while (i * i <= n) {
+                if (n % i === 0n) {
+                    divs.push(i);
+                    if (i * i !== n) divs.push(n / i);
+                }
+                i++;
+            }
+            return divs.sort((a, b) => (a < b ? 1 : -1));
+        }
+
+        function toExponentialString(value) {
+            const factors = [2, 3];
+            if (value === 1n) return "1";
+            let temp = value;
+            let parts = [];
+            
+            for (let f of factors) {
+                let bigF = BigInt(f);
+                let count = 0;
+                while (temp % bigF === 0n) {
+                    temp /= bigF;
+                    count++;
+                }
+                if (count > 0) {
+                    parts.push(count === 1 ? `${f}` : `${f}<sup>${count}</sup>`);
+                }
+            }
+            if (temp > 1n) parts.push(`${temp}`);
+            return parts.join('×');
+        }
+
+        function attemptDecomposition(N, D, constraintLimit) {
+            const divisors = getDivisors(D).filter(d => d <= N);
+            for (let depth = 1; depth <= 6; depth++) {
+                let res = dfs(N, divisors, 0, depth, [], D, constraintLimit, true);
+                if (res) return { ...res, valid: true }; 
+            }
+            return null; 
+        }
+
+        function fallbackDecomposition(N, D) {
+            const divisors = getDivisors(D).filter(d => d <= N);
+            for (let depth = 1; depth <= 5; depth++) {
+                let res = dfs(N, divisors, 0, depth, [], D, Infinity, false);
+                if (res) return { ...res, valid: false };
+            }
+            return greedyDecomposition(N, D);
+        }
+
+        function dfs(target, divs, startIndex, depth, currentPath, D, limit, enforceConstraint) {
+            if (depth === 0) {
+                if (target === 0n) {
+                    let maxVal = 0n;
+                    for(let p of currentPath) if(p > maxVal) maxVal = p;
+                    const M = D / maxVal;
+                    
+                    if (enforceConstraint) {
+                        if (Number(M) * 2 < limit) return { path: [...currentPath], M: M };
+                        else return null;
+                    } else {
+                        return { path: [...currentPath], M: M };
+                    }
+                }
+                return null;
+            }
+            if (startIndex < divs.length && divs[startIndex] * BigInt(depth) < target) return null;
+
+            for (let i = startIndex; i < divs.length; i++) {
+                const val = divs[i];
+                if (val > target) continue;
+                if (val * BigInt(depth) < target) break;
+                if (enforceConstraint && currentPath.length === 0) {
+                     const estimatedM = D / val;
+                     if (Number(estimatedM) * 2 >= limit) continue; 
+                }
+                currentPath.push(val);
+                let res = dfs(target - val, divs, i, depth - 1, currentPath, D, limit, enforceConstraint);
+                if (res) return res;
+                currentPath.pop();
+            }
+            return null;
+        }
+
+        function greedyDecomposition(N, D) {
+            let divs = getDivisors(D); 
+            let currentN = N;
+            let path = [];
+            let maxVal = 0n;
+            for (let div of divs) {
+                if (currentN === 0n) break;
+                while (currentN >= div) {
+                    path.push(div);
+                    if (div > maxVal) maxVal = div;
+                    currentN -= div;
+                }
+            }
+            return { path: path, M: D/maxVal, valid: false };
+        }
+
+        function parseExpression(expr) {
+            try {
+                let safeExpr = expr.replace(/\^/g, '**').replace(/[^0-9\.\*\/\+\-\(\)]/g, '');
+                if (!safeExpr) return NaN;
+                return new Function('return ' + safeExpr)();
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        function renderCustomNodes(periods) {
+            const list = document.getElementById('nodeList');
+            list.innerHTML = "";
+            periods.forEach(p => {
+                addNodeRow(p);
+            });
+        }
+
+        function addNodeRow(val) {
+            const list = document.getElementById('nodeList');
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.innerHTML = `
+                <input type="text" class="node-input" value="${val}" placeholder="输入周期 (如 128 或 2*2^6)">
+                <button class="btn-sm btn-danger" onclick="this.parentElement.remove()">删除</button>
+            `;
+            list.appendChild(row);
+        }
+
+        function getCustomPeriods() {
+            const inputs = document.querySelectorAll('#nodeList .node-input');
+            let res = [];
+            inputs.forEach(inp => {
+                let v = parseExpression(inp.value);
+                if (!isNaN(v) && v > 0) {
+                    res.push(v);
+                }
+            });
+            return res;
+        }
+
+        function isFactor23(n) {
+            if (n <= 0 || !Number.isInteger(n)) return false;
+            let temp = n;
+            while (temp % 2 === 0) temp /= 2;
+            while (temp % 3 === 0) temp /= 3;
+            return temp === 1;
+        }
+
+        function runCustomSimulation() {
+            const x = parseFloat(document.getElementById('demandInput').value);
+            const p = parseFloat(document.getElementById('unitInput').value);
+            const z = isNaN((x - 200) / p) ? 0 : Math.floor((x - 200) / p);
+            
+            if (isNaN(x) || isNaN(p)) {
+                 alert("请先填写左侧的需求电量和单位电量");
+                 return;
+            }
+
+            const periods = getCustomPeriods();
+            
+            for (let val of periods) {
+                if (!isFactor23(val)) {
+                    alert(`周期值 ${val} 不合法：仅允许包含因子 2 和 3 (例如 12, 18, 32...)`);
+                    return;
+                }
+                if (val % 2 !== 0) {
+                    alert(`周期值 ${val} 不合法：必须是偶数 (因分母 = 周期/2)`);
+                    return;
+                }
+            }
+
+            const isSimSafe = simulateAndDraw(z, p, x, periods);
+            
+            const banner = document.getElementById('statusBanner');
+            banner.style.display = 'block';
+            if (isSimSafe) {
+                banner.className = "status-banner banner-safe";
+                banner.innerText = "电力供应稳定";
+            } else {
+                banner.className = "status-banner banner-danger";
+                banner.innerText = "存在电力耗尽风险";
+            }
+            
+            const resultLabel = document.getElementById("valSimResult");
+            if (resultLabel) {
+                 resultLabel.innerText = isSimSafe ? '安全 (Buffer耗尽前补给到达)' : '失败 (电容曾降至0)';
+                 resultLabel.style.color = isSimSafe ? '#16a34a' : '#dc2626';
+            }
+
+            let currentActual = 0;
+            for(let p of periods) {
+                currentActual += 2.0 / p;
+            }
+            const actualLabel = document.getElementById("valActual");
+            if (actualLabel) {
+                actualLabel.innerText = currentActual.toFixed(10).replace(/\.?0+$/, "");
+            }
+
+            let fractionParts = [];
+            let sortedPeriods = [...periods].sort((a,b) => a - b);
+            
+            for (let pVal of sortedPeriods) {
+                let denom = pVal / 2;
+                let denomBig = BigInt(Math.round(denom));
+                let denomStr = toExponentialString(denomBig);
+                fractionParts.push(`1/${denomStr}`);
+            }
+            
+            let decompositionStr = fractionParts.length > 0 ? fractionParts.join(' + ') : "(无)";
+
+            const outputDiv = document.getElementById('outputExpr');
+            outputDiv.innerHTML = `
+                <div class="final-expression">
+                    <span style="font-weight:bold">${z}</span> 
+                    <span style="color:#9ca3af; margin:0 10px;">@</span> 
+                    ${decompositionStr}
+                </div>
+            `;
+        }
+
+        function gcd_number(a, b) {
+            return !b ? a : gcd_number(b, a % b);
+        }
+
+        function lcm_number(a, b) {
+            if (a > 1e12 || b > 1e12) return 1e13; 
+            return (a * b) / gcd_number(a, b);
+        }
+
+        function simulateAndDraw(Z, P, x, periods, dryRun = false) {
+            let simTime = 1;
+            for (let p of periods) {
+                if (p > 1e9) { simTime = 1e9; break; }
+                simTime = lcm_number(simTime, p);
+                if (simTime > 2000000) break;
+            }
+            simTime = simTime * 10;
+            if (simTime > 4000000) simTime = 4000000;
+            
+            const baseSupply = 200;
+            const intSupply = Z * P;
+            const fullCapacitor = 100000;
+            
+            let t = 0;
+            let E = fullCapacitor;
+            const rateOn = baseSupply + intSupply + P - x;
+            const rateOff = baseSupply + intSupply - x;
+            let events = [];
+
+            let B = 0;
+            let sortedPeriods = [...periods].sort((a,b) => a - b);
+            for (let i = 0; i < sortedPeriods.length; i++) {
+                let p = sortedPeriods[i];
+                if (p > 0) {
+                    events.push({ t: i * 40, type: 1, p: p });
+                }
+            }
+            // let B = 40 * periods.length;
+            // for (let i = 0; i < periods.length; i++) {
+            //     if (periods[i] > 0) {
+            //         events.push({ t: periods[i], type: 1, p: periods[i] });
+            //     }
+            // }
+            events.sort((a, b) => a.t - b.t);
+
+            let history = [{t: 0, e: E}];
+            let minE = E;
+            let isDepleted = false;
+
+            const maxEvents = 200000;
+            let eventCount = 0;
+            
+            if (rateOn < 0 && periods.length === 0) {
+                 let timeToEmpty = E / -rateOn;
+                 history.push({t: timeToEmpty, e: 0});
+                 history.push({t: simTime, e: 0});
+                 drawChart(history, simTime);
+                 return false;
+            }
+
+            while (t < simTime && eventCount < maxEvents) {
+                let nextEvent = events.length > 0 ? events[0] : null;
+                let nextT = nextEvent ? nextEvent.t : simTime;
+                
+                let bufferEmptyT = -1;
+                if (B > 0) {
+                    bufferEmptyT = t + B;
+                    if (bufferEmptyT < nextT && bufferEmptyT > t + 1e-9) {
+                        nextT = bufferEmptyT;
+                        nextEvent = null;
+                    }
+                }
+
+                if (nextT > simTime) nextT = simTime;
+
+                let dt = nextT - t;
+                if (dt > 1e-9) {
+                    let currentRate = (B > 0) ? rateOn : rateOff;
+                    E += currentRate * dt;
+                    
+                    if (E > fullCapacitor) E = fullCapacitor;
+                    if (E < 1e-3 && currentRate < 0) {
+                         if (E < 0) E = 0;
+                         isDepleted = true; 
+                    }
+                    if (E < 0) E = 0;
+                    
+                    if (E < minE) minE = E;
+
+                    if (B > 0) {
+                        B -= dt;
+                        if (B < 0) B = 0;
+                    }
+                }
+
+                t = nextT;
+                history.push({t: t, e: E});
+
+                if (t >= simTime) break;
+
+                if (nextEvent && nextEvent.type === 1) {
+                    let arrivedIdxs = [];
+                    while(events.length > 0 && Math.abs(events[0].t - t) < 1e-9) {
+                        let ev = events.shift();
+                        arrivedIdxs.push(ev);
+                    }
+                    B += 40 * arrivedIdxs.length;
+                    
+                    for (let ev of arrivedIdxs) {
+                        let newT = ev.t + ev.p;
+                        if (newT <= simTime + 100) {
+                            let newEv = { t: newT, type: 1, p: ev.p };
+                            let k = 0;
+                            while(k < events.length && events[k].t < newT) k++;
+                            events.splice(k, 0, newEv);
+                        }
+                    }
+                }
+                
+                eventCount++;
+            }
+
+            if (!dryRun) drawChart(history, simTime);
+            return !isDepleted;
+        }
+
+        function drawChart(data, maxTime) {
+            const svg = document.getElementById('chartSvg');
+            const container = document.getElementById('chartContainer');
+            container.style.display = 'block';
+            
+            // let points = [];
+            // if (data.length > 600) {
+            //     const step = data.length / 600;
+            //     for (let i = 0; i < 600; i++) {
+            //         points.push(data[Math.floor(i * step)]);
+            //     }
+            //     points.push(data[data.length - 1]);
+            // } else {
+            //     points = data;
+            // }
+            let points = data;
+
+            const w = 600;
+            const h = 200;
+            const maxY = 100000;
+
+            const getX = (t) => (t / maxTime) * w;
+            const getY = (e) => h - (e / maxY) * h;
+
+            let pathD = "";
+            if (points.length > 0) {
+                pathD = `M ${getX(points[0].t)} ${getY(points[0].e)} `;
+                for (let i = 1; i < points.length; i++) {
+                    pathD += `L ${getX(points[i].t)} ${getY(points[i].e)} `;
+                }
+            }
+
+            const zeroY = getY(0);
+            
+            svg.innerHTML = `
+                <rect width="100%" height="100%" fill="#fafafa"/>
+                <line x1="0" y1="${zeroY}" x2="${w}" y2="${zeroY}" class="axis-line" />
+                <path d="${pathD}" class="chart-line" />
+                <text x="5" y="15" font-size="10" fill="#999">100k</text>
+                <text x="5" y="${h-5}" font-size="10" fill="#999">0</text>
+                <text x="${w-5}" y="${h-5}" font-size="10" fill="#999" text-anchor="end">Time: ${(maxTime).toFixed(0)}s</text>
+            `;
+        }
+
+        function calculate() {
+            const btn = document.getElementById('calcBtn');
+            btn.disabled = true;
+            btn.innerText = "计算中...";
+            document.getElementById('resultArea').style.display = 'none';
+
+            setTimeout(() => {
+                runCalculation();
+                btn.disabled = false;
+                btn.innerText = "运行计算";
+            }, 50);
+        }
+
+        function runCalculation() {
+            const outputDiv = document.getElementById('outputExpr');
+            const detailsDiv = document.getElementById('detailsOutput');
+            const resultArea = document.getElementById('resultArea');
+            const banner = document.getElementById('statusBanner');
+            const chartContainer = document.getElementById('chartContainer');
+            const factors = [2, 3];
+            const x = parseFloat(document.getElementById('demandInput').value);
+            const p = parseFloat(document.getElementById('unitInput').value);
+            let s_val = document.getElementById('actualInput').value;
+            let s = s_val ? parseFloat(s_val) : x;
+
+            if (isNaN(x) || isNaN(p) || isNaN(s)) {
+                alert("请输入有效的数值");
+                return;
+            }
+            const val_x = (x - 200) / p;
+            const z = Math.floor(val_x); 
+            const y = val_x - z;         
+            const targetFloat = y / 20;
+            const val_s = (s - 200) / p;
+            const dec_s = val_s - Math.floor(val_s);
+            const limitFloat = dec_s / 20;
+            const denomConst = x - p * z;
+            let constraintLimit = Infinity;
+            if (denomConst > 1e-9) {
+                constraintLimit = 100000 / denomConst;
+            }
+            if (targetFloat < 1e-12) {
+                resultArea.style.display = 'block';
+                chartContainer.style.display = 'none';
+                banner.className = "status-banner banner-safe";
+                banner.innerText = "断电时间内仓储电力不会消耗完";
+                
+                outputDiv.innerHTML = `
+                    <div class="final-expression">
+                        <span style="font-weight:bold">${z}</span> 
+                        <span style="color:#9ca3af; margin:0 10px;">@</span> 
+                        0
+                    </div>
+                `;
+                detailsDiv.innerHTML = `<div class="details-box" style="text-align:center; color:#6b7280">无需分数配比（整除）</div>`;
+                return;
+            }
+
+            const BASE = 10n ** 17n;
+            const bigTarget = BigInt(Math.floor(targetFloat * 1e17));
+            const bigLimit = BigInt(Math.floor(limitFloat * 1e17));
+
+            let queue = [1n];
+            let visited = new Set([1n]);
+            let bestFallback = null;
+            let finalSolution = null;
+
+            const startTime = Date.now();
+            const timeoutVal = parseFloat(document.getElementById('timeoutInput').value) || 3;
+            const TIMEOUT_MS = timeoutVal * 1000;
+
+            let isTimeout = false;
+            let qIndex = 0;
+
+            while (qIndex < queue.length) {
+                if (Date.now() - startTime > TIMEOUT_MS) {
+                    isTimeout = true;
+                    break;
+                }
+                
+                if (qIndex > 5000) {
+                    queue = queue.slice(qIndex);
+                    qIndex = 0;
+                    if (queue.length > 1 && queue.length < 2000 && Math.random() < 0.05) {
+                        queue.sort((a,b) => (a < b ? -1 : 1));
+                    }
+                }
+
+                const D = queue[qIndex++];
+                
+                const valNum = D * bigTarget;
+                let N = valNum / BASE;
+                if (valNum % BASE !== 0n) N += 1n; 
+
+                const lhs = N * BASE;
+                const rhs = D * bigLimit;
+
+                if (lhs <= rhs) {
+                    const common = gcd(N, D);
+                    const simN = N / common;
+                    const simD = D / common;
+
+                    let strictRes = attemptDecomposition(simN, simD, constraintLimit);
+                    
+                    if (strictRes) {
+                        let checkPeriods = [];
+                        for (let val of strictRes.path) {
+                            let denom = Number(simD) / Number(val);
+                            checkPeriods.push(2 * denom);
+                        }
+                        let isSimSafe = simulateAndDraw(z, p, x, checkPeriods, true);
+
+                        if (isSimSafe) {
+                            finalSolution = { N: simN, D: simD, ...strictRes };
+                            break; 
+                        }
+                    } else {
+                        if (!bestFallback) {
+                            let fallbackRes = fallbackDecomposition(simN, simD);
+                            bestFallback = { N: simN, D: simD, ...fallbackRes };
+                        }
+                    }
+                }
+
+                for (let f of factors) {
+                    let nextD = D * BigInt(f);
+                    if (nextD < 10n ** 19n && !visited.has(nextD)) {
+                        visited.add(nextD);
+                        queue.push(nextD);
+                    }
+                }
+            }
+
+            resultArea.style.display = 'block';
+            let resultToUse = finalSolution;
+            if (!resultToUse) {
+                let msg = isTimeout ? `计算超时 (${timeoutVal}s)，未找到满足模拟稳定性的结果。` : "未找到满足条件的解。";
+                
+                outputDiv.innerHTML = `<div class="error-msg">${msg}</div>`;
+                banner.style.display = 'none';
+                
+                detailsDiv.innerHTML = `
+                <div class="details-box">
+                    <div class="detail-row">
+                        <span class="detail-label">目标传送带倍率:</span>
+                        <span id="valTarget" class="detail-val">${targetFloat.toFixed(10).replace(/\.?0+$/, "")}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">实际传送带倍率:</span>
+                        <span id="valActual" class="detail-val">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">模拟结果:</span>
+                        <span id="valSimResult" class="detail-val" style="color:#6b7280">等待手动模拟</span>
+                    </div>
+                </div>
+                `;
+                
+                chartContainer.style.display = 'none';
+                return;
+            }
+
+            const { N, D, path, valid } = resultToUse;
+
+            let autoPeriods = [];
+            for (let val of path) {
+                let denom = Number(D) / Number(val);
+                autoPeriods.push(2 * denom);
+            }
+
+            renderCustomNodes(autoPeriods);
+
+            const isSimSafe = simulateAndDraw(z, p, x, autoPeriods);
+
+            path.sort((a,b) => (a < b ? 1 : -1));
+            let fractionParts = [];
+            for (let val of path) {
+                let denomVal = D / val;
+                let denomStr = toExponentialString(denomVal);
+                fractionParts.push(`1/${denomStr}`);
+            }
+            let decompositionStr = fractionParts.join(' + ');
+
+            banner.style.display = 'block';
+            
+            const isReallySafe = valid && isSimSafe;
+
+            if (isReallySafe) {
+                banner.className = "status-banner banner-safe";
+                banner.innerText = "电力供应稳定";
+            } else {
+                banner.className = "status-banner banner-danger";
+                banner.innerText = "存在电力耗尽风险";
+            }
+
+            outputDiv.innerHTML = `
+                <div class="final-expression">
+                    <span style="font-weight:bold">${z}</span> 
+                    <span style="color:#9ca3af; margin:0 10px;">@</span> 
+                    ${decompositionStr}
+                </div>
+            `;
+
+            let warnMsg = "";
+            if (!valid && isTimeout) {
+                warnMsg = `<div class="detail-row"><span class="detail-label" style="color:#b91c1c">注意:</span><span class="detail-val" style="color:#b91c1c; font-weight:normal">计算超时，仅展示数值最接近方案。</span></div>`;
+            }
+
+            const actualVal = Number(N) / Number(D);
+
+            detailsDiv.innerHTML = `
+                <div class="details-box">
+                    ${warnMsg}
+                    <div class="detail-row">
+                        <span class="detail-label">目标传送带倍率:</span>
+                        <span id="valTarget" class="detail-val">${targetFloat.toFixed(10).replace(/\.?0+$/, "")}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">实际传送带倍率:</span>
+                        <span id="valActual" class="detail-val">${actualVal.toFixed(10).replace(/\.?0+$/, "")}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">模拟结果:</span>
+                        <span id="valSimResult" class="detail-val" style="color:${isSimSafe ? '#16a34a' : '#dc2626'}">${isSimSafe ? '安全 (Buffer耗尽前补给到达)' : '失败 (核心电容量曾降至0)'}</span>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
