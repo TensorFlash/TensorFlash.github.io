@@ -480,31 +480,41 @@
             
             for (let val of periods) {
                 if (!isFactor23(val)) {
-                    alert(`周期值 ${val} 不合法：仅允许包含因子 2 和 3 (例如 12, 18, 32...)`);
+                    alert(`周期值 ${val} 不合法：仅允许包含因子 2 和 3`);
                     return;
                 }
                 if (val % 2 !== 0) {
-                    alert(`周期值 ${val} 不合法：必须是偶数 (因分母 = 周期/2)`);
+                    alert(`周期值 ${val} 不合法：必须是偶数`);
                     return;
                 }
             }
 
             const isSimSafe = simulateAndDraw(z, p, x, periods);
+            const isMathSafe = checkStabilityMath(z, p, x, periods);
             
             const banner = document.getElementById('statusBanner');
             banner.style.display = 'block';
-            if (isSimSafe) {
+            
+            if (isSimSafe && isMathSafe) {
                 banner.className = "status-banner banner-safe";
-                banner.innerText = "电力供应稳定";
+                banner.innerText = "电力供应稳定 (数学验证通过)";
             } else {
                 banner.className = "status-banner banner-danger";
-                banner.innerText = "存在电力耗尽风险";
+                let reason = "";
+                if (!isSimSafe) reason = "模拟中电容耗尽";
+                else if (!isMathSafe) reason = "存在最坏相位风险 (数学验证失败)";
+                banner.innerText = `存在电力耗尽风险: ${reason}`;
             }
-            
+
             const resultLabel = document.getElementById("valSimResult");
             if (resultLabel) {
-                 resultLabel.innerText = isSimSafe ? '安全 (Buffer耗尽前补给到达)' : '失败 (电容曾降至0)';
-                 resultLabel.style.color = isSimSafe ? '#16a34a' : '#dc2626';
+                 if (isSimSafe && isMathSafe) {
+                     resultLabel.innerText = '安全 (Buffer充足)';
+                     resultLabel.style.color = '#16a34a';
+                 } else {
+                     resultLabel.innerText = isMathSafe ? '失败 (模拟器耗尽)' : '危险 (数学判定最坏相位会耗尽)';
+                     resultLabel.style.color = '#dc2626';
+                 }
             }
 
             let currentActual = 0;
@@ -545,6 +555,77 @@
         function lcm_number(a, b) {
             if (a > 1e12 || b > 1e12) return 1e13; 
             return (a * b) / gcd_number(a, b);
+        }
+
+        function checkStabilityMath(z, p, demand, periods) {
+            const capacitor = 100000;
+            const basePower = z * p + 200;
+            const drainRate = demand - basePower; // L (亏电速率)
+            
+            // 电池能量贡献 (相对于亏电基准，发电机工作比不工作多提供 p)
+            // 修正逻辑：发电机开启时提供 p + basePower，减去 demand 为净输入。
+            // 简化模型：发电机开启相对于关闭，提供了 p 的功率增量。
+            // 单个电池总能量贡献 = p * 40
+            const batteryEnergy = p * 40; 
+
+            // 如果如果不开发电机都在充电（需求极低），则绝对安全
+            if (drainRate <= 0) return true;
+
+            // 1. 计算所有周期的最小公倍数 (LCM) 作为检查窗口的上限
+            let simEnd = 1;
+            let maxP = 0;
+            for (let t of periods) {
+                simEnd = lcm_number(simEnd, t);
+                if (t > maxP) maxP = t;
+            }
+
+            // 安全限制：如果周期组合极其复杂导致LCM过大，限制在一定范围内防止浏览器卡死
+            // 通常 Endfield 的周期因子由 2 和 3 构成，不会无限大，但为了保险：
+            const MAX_CHECK_TIME = 5000000; 
+            if (simEnd > MAX_CHECK_TIME) simEnd = MAX_CHECK_TIME;
+
+            // 2. 收集所有关键检查点 (Critical Points)
+            // 函数 f(tau) 的局部最大值一定出现在某个电池刚刚到达之前 (t - epsilon)
+            // 因此我们只需要检查所有 t = k * T_i 的时刻
+            let checkPoints = new Set();
+            for (let period of periods) {
+                // 优化：如果周期太小（如40s内），不需要存太密集的点，但为了严谨全部存入
+                for (let t = period; t <= simEnd; t += period) {
+                    checkPoints.add(t);
+                }
+            }
+            // 将时间点排序
+            let sortedTimes = Array.from(checkPoints).sort((a, b) => a - b);
+
+            // 3. 遍历检查点，计算最大赤字
+            for (let t of sortedTimes) {
+                // 计算当前时刻的总消耗能量 (Assuming constant drain)
+                let energyDrain = drainRate * t;
+
+                // 计算当前时刻能获得的最少电池总能量
+                // 在最坏相位下（同步启动），在时刻 t (不包含 t 本身) 实际收到的电池数
+                // 公式：Sum( floor( (t - epsilon) / T_i ) )
+                // 等价于：如果 t 是 T_i 的倍数，则贡献 (t/T_i) - 1 个；否则贡献 floor(t/T_i) 个
+                let batteryCount = 0;
+                for (let period of periods) {
+                    if (Math.abs(t % period) < 1e-9) { // t is multiple of period
+                        batteryCount += Math.round(t / period) - 1;
+                    } else {
+                        batteryCount += Math.floor(t / period);
+                    }
+                }
+
+                let energySupply = batteryCount * batteryEnergy;
+                let currentDeficit = energyDrain - energySupply;
+
+                // 核心判据：如果赤字超过电容上限
+                if (currentDeficit > capacitor) {
+                    // console.log(`Unstable at t=${t}, Deficit=${currentDeficit}`);
+                    return false; // 判定为不稳定
+                }
+            }
+
+            return true; // 通过所有检查
         }
 
         function simulateAndDraw(Z, P, x, periods, dryRun = false) {
@@ -818,11 +899,13 @@
                             let denom = Number(simD) / Number(val);
                             checkPeriods.push(2 * denom);
                         }
-                        let isSimSafe = simulateAndDraw(z, p, x, checkPeriods, true);
-
-                        if (isSimSafe) {
-                            finalSolution = { N: simN, D: simD, ...strictRes };
-                            break; 
+                        const isMathSafe = checkStabilityMath(z, p, x, checkPeriods);
+                        if (isMathSafe) {
+                            const isSimSafe = simulateAndDraw(z, p, x, checkPeriods, true);
+                            if (isSimSafe) {
+                                finalSolution = { N: simN, D: simD, ...strictRes };
+                                break;
+                            }
                         }
                     } else {
                         if (!bestFallback) {
