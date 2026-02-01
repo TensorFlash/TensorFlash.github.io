@@ -523,7 +523,7 @@
                 let denom = pVal / 2;
                 let denomBig = BigInt(Math.round(denom));
                 let denomStr = toExponentialString(denomBig);
-                fractionParts.push(`1/${denomStr}`);
+                fractionParts.push(`1/(${denomStr})`);
             }
             
             let decompositionStr = fractionParts.length > 0 ? fractionParts.join(' + ') : "(无)";
@@ -887,7 +887,7 @@
             for (let val of path) {
                 let denomVal = D / val;
                 let denomStr = toExponentialString(denomVal);
-                fractionParts.push(`1/${denomStr}`);
+                fractionParts.push(`1/(${denomStr})`);
             }
             let decompositionStr = fractionParts.join(' + ');
 
