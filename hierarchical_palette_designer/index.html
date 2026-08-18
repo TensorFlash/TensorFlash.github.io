@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>UMAP Palette Studio</title>
+    <style>
+        :root {
+            --ink: #15211d;
+            --muted: #66726d;
+            --paper: #f3f1eb;
+            --card: #fffefa;
+            --line: #d9ddd7;
+            --line-strong: #b8c1bb;
+            --accent: #1c6f58;
+            --accent-dark: #145442;
+            --accent-soft: #d9ece5;
+            --shadow: 0 18px 50px rgba(31, 47, 39, .08);
+            --radius-lg: 24px;
+            --radius-md: 15px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 8% 8%, rgba(255, 255, 255, .95) 0 7%, transparent 24%),
+                radial-gradient(circle at 92% 4%, rgba(206, 225, 216, .55), transparent 23%),
+                var(--paper);
+            font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+        button,
+        select,
+        input[type="number"] {
+            min-height: 42px;
+        }
+        button {
+            cursor: pointer;
+        }
+
+        .shell {
+            width: min(1480px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 28px 0 42px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 26px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            font-weight: 750;
+            letter-spacing: -.02em;
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border: 1px solid #aebcb5;
+            border-radius: 11px;
+            position: relative;
+            background: #fbfaf6;
+            box-shadow: inset 0 0 0 5px #f1f3ed;
+            overflow: hidden;
+        }
+
+        .brand-mark::before,
+        .brand-mark::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        .brand-mark::before {
+            width: 9px;
+            height: 9px;
+            left: 8px;
+            top: 16px;
+            box-shadow: 12px -8px 0 #e98252, 15px 8px 0 #7066d8;
+        }
+
+        .brand-mark::after {
+            width: 26px;
+            height: 1px;
+            left: 6px;
+            top: 20px;
+            transform: rotate(-18deg);
+            opacity: .3;
+        }
+
+        .brand small {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 650;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        .top-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 11px;
+            color: #425049;
+            background: rgba(255, 255, 255, .6);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .panel {
+            background: rgba(255, 254, 250, .94);
+            border: 1px solid rgba(191, 199, 193, .82);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .control-panel {
+            position: sticky;
+            top: 18px;
+            padding: 25px;
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 18px;
+            height: 2px;
+            background: currentColor;
+            border-radius: 99px;
+        }
+
+        h1 {
+            margin: 13px 0 10px;
+            max-width: 270px;
+            font-family: Georgia, "Times New Roman", "Songti SC", serif;
+            font-size: clamp(32px, 3vw, 43px);
+            font-weight: 500;
+            line-height: .98;
+            letter-spacing: -.035em;
+        }
+
+        .intro {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .rule {
+            height: 1px;
+            margin: 21px 0;
+            background: linear-gradient(90deg, var(--line-strong), transparent);
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #4d5953;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .number-wrap {
+            display: grid;
+            grid-template-columns: 1fr 26px;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 5px 3px 11px;
+            border: 1px solid var(--line-strong);
+            border-radius: 12px;
+            background: #fff;
+            transition: border .2s, box-shadow .2s;
+        }
+
+        .number-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            min-width: 0;
+            padding: 0;
+            border: 0;
+            outline: 0;
+            color: var(--ink);
+            background: transparent;
+            font-weight: 750;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button {
+            display: none;
+        }
+
+        .stepper {
+            display: grid;
+            align-content: center;
+            gap: 2px;
+        }
+
+        .stepper button {
+            width: 24px;
+            height: 17px;
+            min-height: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 5px;
+            color: #64706a;
+            background: #f0f2ee;
+            font-size: 9px;
+            line-height: 1;
+        }
+
+        .stepper button:hover {
+            background: var(--accent-soft);
+            color: var(--accent-dark);
+        }
+
+        select {
+            width: 100%;
+            padding: 0 36px 0 12px;
+            color: var(--ink);
+            border: 1px solid var(--line-strong);
+            border-radius: 12px;
+            outline: none;
+            background: #fff;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .full-field {
+            margin-top: 13px;
+        }
+
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fafaf6;
+        }
+
+        .switch-copy strong {
+            display: block;
+            font-size: 12px;
+        }
+
+        .switch-copy span {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .switch {
+            width: 42px;
+            height: 24px;
+            margin: 0;
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            background: #cbd1cc;
+            position: relative;
+            transition: .2s;
+            cursor: pointer;
+        }
+
+        .switch::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            top: 3px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
+            transition: transform .2s;
+        }
+
+        .switch:checked {
+            background: var(--accent);
+        }
+        .switch:checked::after {
+            transform: translateX(18px);
+        }
+
+        .primary,
+        .secondary,
+        .ghost {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 12px;
+            font-weight: 750;
+            transition: transform .15s, background .2s, border .2s;
+        }
+
+        .primary:active,
+        .secondary:active,
+        .ghost:active {
+            transform: translateY(1px);
+        }
+
+        .primary {
+            width: 100%;
+            margin-top: 15px;
+            padding: 0 16px;
+            color: #fff;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            box-shadow: 0 9px 20px rgba(28, 111, 88, .2);
+        }
+
+        .primary:hover {
+            background: var(--accent-dark);
+        }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+        }
+
+        .button-row .wide {
+            grid-column: 1 / -1;
+        }
+
+        .secondary,
+        .ghost {
+            min-height: 40px;
+            padding: 0 11px;
+            color: #34423b;
+            border: 1px solid var(--line-strong);
+            background: #fff;
+            font-size: 11px;
+        }
+
+        .secondary:hover,
+        .ghost:hover {
+            border-color: #8da097;
+            background: #f7faf8;
+        }
+
+        .method-note {
+            margin: 13px 0 0;
+            color: #75807a;
+            font-size: 10px;
+            line-height: 1.55;
+        }
+
+        .result-column {
+            display: grid;
+            gap: 22px;
+            min-width: 0;
+        }
+
+        .canvas-panel {
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 19px 21px 15px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: baseline;
+            gap: 9px;
+            min-width: 0;
+        }
+
+        .panel-title h2 {
+            margin: 0;
+            font-size: 14px;
+            letter-spacing: -.01em;
+        }
+
+        .panel-title span {
+            color: var(--muted);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .canvas-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .canvas-actions .ghost {
+            min-height: 34px;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            width: 100%;
+            min-height: 430px;
+            background:
+                linear-gradient(rgba(28, 55, 44, .035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(28, 55, 44, .035) 1px, transparent 1px),
+                #fffefa;
+            background-size: 36px 36px;
+        }
+
+        #umapSvg {
+            display: block;
+            width: 100%;
+            height: auto;
+            min-height: 430px;
+            aspect-ratio: 1.55 / 1;
+        }
+
+        .subcount-editor {
+            display: grid;
+            gap: 7px;
+            max-height: 222px;
+            margin-top: 13px;
+            padding-right: 3px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .subcount-row {
+            display: grid;
+            grid-template-columns: 1fr 92px;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 8px 7px 11px;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            background: #fafaf7;
+        }
+
+        .subcount-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .family-chip {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--chip, var(--accent));
+        }
+
+        .subcount-row .number-wrap {
+            min-height: 36px;
+        }
+
+        .vector-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent-dark);
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        .canvas-badge {
+            position: absolute;
+            top: 15px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 9px;
+            color: #4d5a54;
+            border: 1px solid rgba(190, 199, 193, .8);
+            border-radius: 9px;
+            background: rgba(255, 254, 250, .86);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+            font-size: 9px;
+            font-weight: 750;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .palette-panel {
+            padding-bottom: 5px;
+        }
+
+        .palette-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 21px 4px;
+            overflow-x: auto;
+        }
+
+        .mini-label {
+            margin-right: auto;
+            color: var(--muted);
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding: 13px 21px 19px;
+        }
+
+        .group-card {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            background: #fff;
+            min-width: 0;
+        }
+
+        .group-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            color: #fff;
+        }
+
+        .group-card-head strong {
+            font-size: 11px;
+            letter-spacing: .02em;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, .25);
+        }
+
+        .group-card-head span {
+            padding: 3px 6px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .14);
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .swatch-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(93px, 1fr));
+            gap: 1px;
+            background: var(--line);
+        }
+
+        .swatch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            padding: 8px 9px;
+            border: 0;
+            text-align: left;
+            background: #fff;
+        }
+
+        .swatch:hover {
+            background: #f6f8f5;
+        }
+
+        .swatch-dot {
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 6px;
+        }
+
+        .swatch-meta {
+            min-width: 0;
+            line-height: 1.2;
+        }
+
+        .swatch-meta strong,
+        .swatch-meta span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .swatch-meta strong {
+            color: #4d5953;
+            font-size: 9px;
+        }
+
+        .swatch-meta span {
+            margin-top: 3px;
+            color: #1c2722;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 9px;
+            font-weight: 750;
+        }
+
+        .footer {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            margin-top: 20px;
+            padding: 0 4px;
+            color: #748079;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+        .footer strong {
+            color: #526058;
+        }
+        .toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 50;
+            padding: 11px 15px;
+            color: #fff;
+            border-radius: 11px;
+            background: #18251f;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .2);
+            font-size: 12px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: .22s;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 980px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+            .control-panel {
+                position: static;
+            }
+            h1 {
+                max-width: none;
+            }
+            .palette-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .shell {
+                width: min(100% - 22px, 1480px);
+                padding-top: 16px;
+            }
+            .top-note {
+                display: none;
+            }
+            .control-panel {
+                padding: 20px;
+            }
+            .panel-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .canvas-actions {
+                width: 100%;
+            }
+            .canvas-actions .ghost {
+                flex: 1;
+            }
+            .palette-toolbar {
+                flex-wrap: wrap;
+            }
+            .mini-label {
+                width: 100%;
+            }
+            .footer {
+                flex-direction: column;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                scroll-behavior: auto !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span>UMAP Palette Studio<small>Scientific color systems</small></span>
+            </div>
+            <div class="top-note"><span class="status-dot"></span>本地运行 · 无数据上传</div>
+        </header>
+
+        <main class="workspace">
+            <aside class="panel control-panel">
+                <div class="eyebrow">Palette parameters</div>
+                <h1>为层级数据<br>生成好颜色</h1>
+                <p class="intro">大类使用不同色系，小类在同色系内兼顾亲缘感与可辨识度。右侧用结构化随机 UMAP 即时预览。</p>
+
+                <div class="rule"></div>
+
+                <div class="field">
+                    <label for="groupCount">大类数量（上限 200）</label>
+                    <div class="number-wrap">
+                        <input id="groupCount" type="number" min="1" max="200" value="5" inputmode="numeric" aria-describedby="rangeNote">
+                        <div class="stepper">
+                            <button type="button" data-step="groupCount" data-delta="1" aria-label="增加大类">▲</button>
+                            <button type="button" data-step="groupCount" data-delta="-1" aria-label="减少大类">▼</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subcountEditor" class="subcount-editor" aria-label="分别设置每个大类的小类数量"></div>
+
+                <div class="field full-field">
+                    <label for="paletteMode">色彩策略</label>
+                    <select id="paletteMode">
+                        <option value="vivid">科研鲜明 · 屏幕优先</option>
+                        <option value="print">柔和印刷 · 白底优先</option>
+                        <option value="deep">深色稳健 · 强对比</option>
+                    </select>
+                </div>
+
+                <div class="switch-row">
+                    <div class="switch-copy">
+                        <strong>显示大类轮廓</strong>
+                        <span>虚线包络突出层级结构</span>
+                    </div>
+                    <input id="showContours" class="switch" type="checkbox" checked aria-label="显示大类轮廓">
+                </div>
+
+                <button id="generateBtn" class="primary" type="button">
+                    <span aria-hidden="true">✦</span> 生成新色板
+                </button>
+
+                <div class="rule"></div>
+
+                <div class="button-row">
+                    <button id="copyPythonBtn" class="secondary wide" type="button">复制 Python dict（含大类）</button>
+                    <button id="copyHexBtn" class="secondary" type="button">复制 HEX</button>
+                    <button id="copyJsonBtn" class="secondary" type="button">复制 JSON</button>
+                    <button id="copyCssBtn" class="secondary" type="button">复制 CSS</button>
+                    <button id="downloadCsvBtn" class="secondary" type="button">下载 CSV</button>
+                </div>
+                <p class="method-note" id="rangeNote">每个大类可独立设置 1–50 个小类。大类较少且小类增多时，算法会自适应借用相邻色系，并按感知色差筛选以提高区分度。</p>
+            </aside>
+
+            <section class="result-column">
+                <article class="panel canvas-panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <h2>结构化 UMAP 预览</h2>
+                            <span id="plotMeta">20 clusters · 2,400 points</span>
+                        </div>
+                        <div class="canvas-actions">
+                            <button id="shuffleBtn" class="ghost" type="button">↻ 重排点云</button>
+                            <button id="svgBtn" class="ghost" type="button">⇩ 导出 SVG</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrap">
+                        <svg id="umapSvg" viewBox="0 0 1200 760" role="img" aria-labelledby="umapTitle umapDesc" xmlns="http://www.w3.org/2000/svg">
+                            <title id="umapTitle">使用当前色板绘制的随机结构化 UMAP 矢量散点图</title>
+                            <desc id="umapDesc">每个点均为不透明 SVG 圆形元素，大类通过虚线矢量轮廓区分。</desc>
+                        </svg>
+                        <div class="canvas-badge"><span class="status-dot"></span>SVG vector preview</div>
+                    </div>
+                </article>
+
+                <article class="panel palette-panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <h2>层级色板</h2>
+                            <span id="paletteMeta">5 families · 20 colors</span>
+                        </div>
+                    </div>
+                    <div class="palette-toolbar">
+                        <span class="mini-label">点击任一色块复制该颜色值</span>
+                        <button id="downloadJsonBtn" class="ghost" type="button">下载 JSON</button>
+                        <button id="downloadCssBtn" class="ghost" type="button">下载 CSS</button>
+                    </div>
+                    <div id="paletteGrid" class="palette-grid" aria-live="polite"></div>
+                </article>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span><strong>说明：</strong>预览图为前端随机模拟，仅用于观察配色层级，不代表真实 UMAP 计算结果。</span>
+            <span class="vector-note">◇ 单文件 · 离线可用 · SVG 矢量渲染</span>
+        </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const $ = (id) => document.getElementById(id);
+            const svg = $("umapSvg");
+            const SVG_NS = "http://www.w3.org/2000/svg";
+            const state = {
+                seed: Math.floor(Math.random() * 1e9),
+                plotSeed: Math.floor(Math.random() * 1e9),
+                subCounts: [4, 3, 5, 4, 2],
+                palette: [],
+                groups: [],
+                model: null
+            };
+
+            const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+            const mod = (n, m) => ((n % m) + m) % m;
+            const pad = (n) => String(n).padStart(2, "0");
+
+            function mulberry32(seed) {
+                let a = seed >>> 0;
+                return function() {
+                    a |= 0;
+                    a = a + 0x6D2B79F5 | 0;
+                    let t = Math.imul(a ^ a >>> 15, 1 | a);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+
+            function gaussian(rand) {
+                let u = 0,
+                    v = 0;
+                while (u === 0) u = rand();
+                while (v === 0) v = rand();
+                return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+            }
+
+            function linearToSrgb(c) {
+                return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+            }
+
+            function rawOklch(L, C, h) {
+                const hr = h * Math.PI / 180;
+                const a = C * Math.cos(hr);
+                const b = C * Math.sin(hr);
+                const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+                const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+                const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+                const l = l_ * l_ * l_;
+                const m = m_ * m_ * m_;
+                const s = s_ * s_ * s_;
+                const rLin = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+                const gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+                const bLin = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+                return [linearToSrgb(rLin), linearToSrgb(gLin), linearToSrgb(bLin)];
+            }
+
+            function oklchToColor(L, C, h) {
+                let lo = 0,
+                    hi = C,
+                    rgb = rawOklch(L, C, h);
+                const inGamut = (arr) => arr.every(v => v >= 0 && v <= 1);
+                if (!inGamut(rgb)) {
+                    for (let i = 0; i < 18; i++) {
+                        const mid = (lo + hi) / 2;
+                        const test = rawOklch(L, mid, h);
+                        if (inGamut(test)) { lo = mid;
+                            rgb = test; } else hi = mid;
+                    }
+                }
+                const ints = rgb.map(v => Math.round(clamp(v, 0, 1) * 255));
+                return {
+                    hex: "#" + ints.map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase(),
+                    rgb: ints,
+                    oklch: [L, lo, mod(h, 360)]
+                };
+            }
+
+            function luminance(rgb) {
+                const f = v => {
+                    v /= 255;
+                    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+                };
+                return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
+            }
+
+            function rgbToOklab(rgb) {
+                const linear = rgb.map(value => {
+                    const v = value / 255;
+                    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+                });
+                const [r, g, b] = linear;
+                const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+                const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+                const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+                return [
+                    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+                    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+                    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+                ];
+            }
+
+            function rgbToColor(rgb) {
+                const lab = rgbToOklab(rgb);
+                const C = Math.hypot(lab[1], lab[2]);
+                const h = mod(Math.atan2(lab[2], lab[1]) * 180 / Math.PI, 360);
+                return {
+                    hex: "#" + rgb.map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase(),
+                    rgb: [...rgb],
+                    oklch: [lab[0], C, h],
+                    lab
+                };
+            }
+
+            function distinctColorDistance(a, b) {
+                const labDistance = Math.hypot(
+                    a.lab[0] - b.lab[0],
+                    a.lab[1] - b.lab[1],
+                    a.lab[2] - b.lab[2]
+                );
+                const rgbDistance = Math.hypot(
+                    a.rgb[0] - b.rgb[0],
+                    a.rgb[1] - b.rgb[1],
+                    a.rgb[2] - b.rgb[2]
+                ) / 441.673;
+                return labDistance * 0.82 + rgbDistance * 0.18;
+            }
+
+            function buildDistinctGroupColors(count, seed) {
+                const rand = mulberry32(seed ^ 0x9E3779B9);
+                const anchorRgbs = [
+                    [235, 30, 70],
+                    [0, 110, 255],
+                    [0, 185, 85],
+                    [255, 140, 0],
+                    [145, 45, 255],
+                    [0, 195, 205],
+                    [255, 35, 185],
+                    [170, 205, 0],
+                    [120, 55, 15],
+                    [20, 35, 120],
+                    [245, 215, 0],
+                    [0, 120, 105]
+                ];
+                // 增加候选色板密度：步长从 36 降至 24，提供更多颜色用于支持 200 个大类
+                const levels = [0, 24, 48, 72, 96, 120, 144, 168, 192, 216, 240, 255];
+                const candidates = [];
+                levels.forEach(r => levels.forEach(g => levels.forEach(b => {
+                    const spread = Math.max(r, g, b) - Math.min(r, g, b);
+                    if (spread < 68) return;
+                    const color = rgbToColor([r, g, b]);
+                    const y = luminance(color.rgb);
+                    if (y < 0.018 || y > 0.84 || color.oklch[1] < 0.065) return;
+                    color.tieBreaker = rand();
+                    candidates.push(color);
+                })));
+
+                const anchorPool = anchorRgbs.map(rgbToColor);
+                const selected = [anchorPool.splice(Math.floor(rand() * anchorPool.length), 1)[0]];
+                while (selected.length < Math.min(count, anchorRgbs.length)) {
+                    let bestIndex = 0;
+                    let bestScore = -Infinity;
+                    anchorPool.forEach((candidate, index) => {
+                        const score = Math.min(...selected.map(color => distinctColorDistance(candidate,
+                        color)));
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestIndex = index;
+                        }
+                    });
+                    selected.push(anchorPool.splice(bestIndex, 1)[0]);
+                }
+                while (selected.length < count) {
+                    let best = null;
+                    let bestScore = -Infinity;
+                    candidates.forEach(candidate => {
+                        if (selected.some(color => color.hex === candidate.hex)) return;
+                        const nearest = Math.min(...selected.map(color => distinctColorDistance(candidate,
+                            color)));
+                        const channelReach = (Math.max(...candidate.rgb) - Math.min(...candidate.rgb)) / 255;
+                        const score = nearest + channelReach * 0.012 + candidate.tieBreaker * 1e-6;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            best = candidate;
+                        }
+                    });
+                    if (!best) break;
+                    selected.push(best);
+                }
+                // 回退：若仍不足，用随机 OKLCH 颜色补齐
+                let fallbackAttempts = 0;
+                while (selected.length < count && fallbackAttempts < 500) {
+                    fallbackAttempts++;
+                    const L = 0.35 + rand() * 0.45;
+                    const C = 0.10 + rand() * 0.18;
+                    const h = rand() * 360;
+                    const fallback = oklchToColor(L, C, h);
+                    const fallbackFull = rgbToColor(fallback.rgb);
+                    if (selected.some(color => color.hex === fallbackFull.hex)) continue;
+                    const nearest = Math.min(...selected.map(color => distinctColorDistance(fallbackFull, color)));
+                    if (nearest < 0.04) continue;
+                    selected.push(fallbackFull);
+                }
+                return selected.map(({ tieBreaker, ...color }) => color);
+            }
+
+            function getSettings(mode) {
+                if (mode === "print") return { L: [0.62, 0.73, 0.55, 0.68, 0.59, 0.77, 0.65, 0.52, 0.71, 0.57], C: 0.125,
+                    spread: 29 };
+                if (mode === "deep") return { L: [0.51, 0.64, 0.45, 0.58, 0.69, 0.49, 0.61, 0.42, 0.66, 0.54], C: 0.175,
+                    spread: 34 };
+                return { L: [0.58, 0.70, 0.50, 0.64, 0.76, 0.54, 0.67, 0.47, 0.72, 0.61], C: 0.175, spread: 32 };
+            }
+
+            function adaptiveFamilySpan(groupCount, subCount, baseSpread) {
+                const density = clamp((subCount - 8) / 42, 0, 1);
+                if (groupCount > 8 || density === 0) return baseSpread;
+
+                // 大类越少，可借用的相邻色相空间越宽；小类越多，扩展越充分。
+                const scarcity = (9 - groupCount) / 8;
+                return clamp(baseSpread + density * (18 + scarcity * 34), baseSpread, 78);
+            }
+
+            function buildSubgroupColors(header, count, groupCount, settings, mode, globalColors) {
+                if (count === 1) return [header];
+
+                const familyHue = header.oklch[2];
+                const hueSpan = adaptiveFamilySpan(groupCount, count, settings.spread);
+                const hueStep = count > 34 ? 4 : count > 18 ? 5 : 6;
+                const hueOffsets = [0];
+                for (let offset = hueStep; offset <= hueSpan + 0.01; offset += hueStep) {
+                    hueOffsets.push(-offset, offset);
+                }
+                if (Math.abs(hueOffsets[hueOffsets.length - 1]) < hueSpan - 1) {
+                    hueOffsets.push(-hueSpan, hueSpan);
+                }
+
+                const modeShift = mode === "deep" ? -0.035 : mode === "print" ? 0.025 : 0;
+                const lightnessOffsets = [0, 0.055, -0.055, 0.105, -0.105, 0.15, -0.15, 0.025, -0.025];
+                const chromaScales = [0.72, 0.86, 1, 1.14, 1.28];
+                const baseChroma = Math.max(header.oklch[1] * 0.82, settings.C * 0.72);
+                const candidates = [];
+                const seen = new Set([header.hex]);
+
+                hueOffsets.forEach(hueOffset => {
+                    lightnessOffsets.forEach(lightnessOffset => {
+                        chromaScales.forEach(chromaScale => {
+                            const L = clamp(header.oklch[0] + lightnessOffset + modeShift, 0.30, 0.88);
+                            const C = clamp(baseChroma * chromaScale, 0.065, 0.30);
+                            const generated = oklchToColor(L, C, familyHue + hueOffset);
+                            if (seen.has(generated.hex)) return;
+                            seen.add(generated.hex);
+                            const color = rgbToColor(generated.rgb);
+                            color.familyOffset = Math.abs(hueOffset);
+                            candidates.push(color);
+                        });
+                    });
+                });
+
+                const selected = [header];
+                while (selected.length < count && candidates.length) {
+                    let bestIndex = 0;
+                    let bestScore = -Infinity;
+                    candidates.forEach((candidate, index) => {
+                        const withinFamily = Math.min(...selected.map(color => distinctColorDistance(candidate,
+                            color)));
+                        const acrossFamilies = globalColors.length ? Math.min(...globalColors.map(color =>
+                            distinctColorDistance(candidate, color))) : withinFamily;
+                        const familyPenalty = (candidate.familyOffset / Math.max(hueSpan, 1)) * 0.012;
+                        const score = withinFamily * 0.78 + acrossFamilies * 0.22 - familyPenalty;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestIndex = index;
+                        }
+                    });
+                    const [picked] = candidates.splice(bestIndex, 1);
+                    selected.push(picked);
+                }
+
+                return selected.map(({ familyOffset, ...color }) => color);
+            }
+
+            function buildPalette(groupCount, subCounts, mode, seed) {
+                const settings = getSettings(mode);
+                const groupBases = buildDistinctGroupColors(groupCount, seed);
+                const groups = [];
+                const flat = [];
+
+                for (let g = 0; g < groupCount; g++) {
+                    const header = groupBases[g] || oklchToColor(0.62, 0.17, (g * 37 + 10) % 360);
+                    const familyHue = header.oklch[2];
+                    const colors = [];
+                    const subgroupColors = buildSubgroupColors(header, subCounts[g], groupCount, settings, mode,
+                        flat);
+
+                    for (let s = 0; s < subCounts[g]; s++) {
+                        const color = subgroupColors[s] || header;
+                        const className = String(flat.length);
+                        const item = {
+                            group: g + 1,
+                            subgroup: s + 1,
+                            name: className,
+                            key: className,
+                            ...color
+                        };
+                        colors.push(item);
+                        flat.push(item);
+                    }
+                    groups.push({ index: g + 1, hue: familyHue, header, colors });
+                }
+                return { groups, flat };
+            }
+
+            function groupAnchors(count, rand) {
+                if (count === 1) return [{ x: .52, y: .49 }];
+                const anchors = [];
+                const cols = Math.ceil(Math.sqrt(count * 1.25));
+                const rows = Math.ceil(count / cols);
+                for (let i = 0; i < count; i++) {
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    const rowCount = Math.min(cols, count - row * cols);
+                    const offset = (cols - rowCount) / 2;
+                    anchors.push({
+                        x: 0.16 + ((col + offset + .5) / cols) * .72 + (rand() - .5) * .035,
+                        y: 0.13 + ((row + .5) / rows) * .73 + (rand() - .5) * .035
+                    });
+                }
+                return anchors;
+            }
+
+            function createPlotModel(groups, seed) {
+                const rand = mulberry32(seed);
+                const anchors = groupAnchors(groups.length, rand);
+                const totalClusters = groups.reduce((sum, group) => sum + group.colors.length, 0);
+                const perCluster = Math.floor(clamp(4200 / totalClusters, 75, 230));
+                const plotGroups = [];
+                const aspect = 1.5;
+
+                groups.forEach((group, gi) => {
+                    const subCount = group.colors.length;
+                    const anchor = anchors[gi];
+                    const childCenters = [];
+                    const baseRadius = groups.length <= 4 ? .105 : groups.length <= 8 ? .073 : .057;
+                    const phase = rand() * Math.PI * 2;
+
+                    for (let s = 0; s < subCount; s++) {
+                        const ring = s === 0 ? 0 : 1 + Math.floor((s - 1) / 7);
+                        const slots = s === 0 ? 1 : Math.min(7, subCount - 1);
+                        const a = phase + (s - 1) / slots * Math.PI * 2 + ring * .37;
+                        const rr = s === 0 ? 0 : baseRadius * ring * (.72 + rand() * .2);
+                        childCenters.push({
+                            x: clamp(anchor.x + Math.cos(a) * rr, .08, .92),
+                            y: clamp(anchor.y + Math.sin(a) * rr * aspect, .10, .88)
+                        });
+                    }
+
+                    const clusters = childCenters.map((center, si) => {
+                        const color = group.colors[si];
+                        const angle = rand() * Math.PI;
+                        const major = (groups.length <= 4 ? .043 : .032) * (.75 + rand() * .5);
+                        const minor = major * (.35 + rand() * .38);
+                        const points = [];
+                        const ca = Math.cos(angle),
+                            sa = Math.sin(angle);
+
+                        for (let p = 0; p < perCluster; p++) {
+                            let gx = gaussian(rand);
+                            let gy = gaussian(rand);
+                            const taper = clamp(1.25 - Math.abs(gx) * .06, .65, 1.2);
+                            gy *= taper;
+                            const warp = Math.sin(gx * 1.7 + si) * minor * .28;
+                            let x = center.x + gx * major * ca - gy * minor * sa + warp * -sa;
+                            let y = center.y + gx * major * sa + gy * minor * ca + warp * ca;
+                            if (rand() < .12 && subCount > 1) {
+                                const next = childCenters[(si + 1) % childCenters.length];
+                                const t = rand() * .38;
+                                x = x * (1 - t) + next.x * t;
+                                y = y * (1 - t) + next.y * t;
+                            }
+                            points.push({ x, y });
+                        }
+                        return { center, points, color, angle, major, minor };
+                    });
+
+                    plotGroups.push({ anchor, group, clusters });
+                });
+                return { groups: plotGroups, perCluster, totalPoints: perCluster * totalClusters };
+            }
+
+            function convexHull(points) {
+                if (points.length < 3) return points;
+                const sorted = [...points].sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+                const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+                const lower = [];
+                for (const p of sorted) {
+                    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower
+                    .pop();
+                    lower.push(p);
+                }
+                const upper = [];
+                for (let i = sorted.length - 1; i >= 0; i--) {
+                    const p = sorted[i];
+                    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper
+                    .pop();
+                    upper.push(p);
+                }
+                lower.pop();
+                upper.pop();
+                return lower.concat(upper);
+            }
+
+            function contourPoints(plotGroup) {
+                const boundary = [];
+                plotGroup.clusters.forEach(cluster => {
+                    for (let i = 0; i < 18; i++) {
+                        const a = i / 18 * Math.PI * 2;
+                        const rx = cluster.major * 2.35;
+                        const ry = cluster.minor * 2.35;
+                        const ca = Math.cos(cluster.angle),
+                            sa = Math.sin(cluster.angle);
+                        boundary.push({
+                            x: cluster.center.x + Math.cos(a) * rx * ca - Math.sin(a) * ry * sa,
+                            y: cluster.center.y + Math.cos(a) * rx * sa + Math.sin(a) * ry * ca
+                        });
+                    }
+                });
+                const hull = convexHull(boundary);
+                const c = hull.reduce((a, p) => ({ x: a.x + p.x / hull.length, y: a.y + p.y / hull.length }), { x: 0,
+                    y: 0 });
+                return hull.map(p => ({ x: c.x + (p.x - c.x) * 1.1, y: c.y + (p.y - c.y) * 1.1 }));
+            }
+
+            function svgEl(name, attrs = {}, text = "") {
+                const el = document.createElementNS(SVG_NS, name);
+                Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+                if (text) el.textContent = text;
+                return el;
+            }
+
+            function smoothClosedPath(pts, sx, sy) {
+                if (!pts.length) return "";
+                const n = pts.length;
+                const p0 = pts[0],
+                    p1 = pts[1 % n];
+                let d = `M ${((p0.x+p1.x)/2)*sx} ${((p0.y+p1.y)/2)*sy}`;
+                for (let i = 1; i <= n; i++) {
+                    const p = pts[i % n];
+                    const next = pts[(i + 1) % n];
+                    d += ` Q ${p.x*sx} ${p.y*sy} ${((p.x+next.x)/2)*sx} ${((p.y+next.y)/2)*sy}`;
+                }
+                return d + " Z";
+            }
+
+            function drawPlot() {
+                const w = 1200,
+                    h = 760;
+                const model = state.model;
+                if (!model) return;
+                const title = svg.querySelector("title")?.cloneNode(true);
+                const desc = svg.querySelector("desc")?.cloneNode(true);
+                svg.replaceChildren();
+                if (title) svg.appendChild(title);
+                if (desc) svg.appendChild(desc);
+                svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+                svg.appendChild(svgEl("rect", { width: w, height: h, fill: "#FFFEFA" }));
+
+                const pointsLayer = svgEl("g", {
+                    id: "umap-points",
+                    "shape-rendering": "geometricPrecision"
+                });
+                model.groups.forEach(pg => {
+                    pg.clusters.forEach(cluster => {
+                        const radius = model.totalPoints > 6500 ? 1.45 : 1.8;
+                        const clusterGroup = svgEl("g", {
+                            fill: cluster.color.hex,
+                            "data-group": pg.group.index,
+                            "data-subgroup": cluster.color.name
+                        });
+                        cluster.points.forEach(p => {
+                            clusterGroup.appendChild(svgEl("circle", {
+                                cx: (p.x * w).toFixed(2),
+                                cy: (p.y * h).toFixed(2),
+                                r: radius
+                            }));
+                        });
+                        pointsLayer.appendChild(clusterGroup);
+                    });
+                });
+                svg.appendChild(pointsLayer);
+
+                if ($("showContours").checked) {
+                    const contourLayer = svgEl("g", {
+                        id: "group-contours",
+                        fill: "none",
+                        "stroke-width": "2.4",
+                        "stroke-dasharray": "8 7",
+                        "stroke-linecap": "round",
+                        "stroke-linejoin": "round"
+                    });
+                    model.groups.forEach(pg => {
+                        const pts = contourPoints(pg);
+                        contourLayer.appendChild(svgEl("path", {
+                            d: smoothClosedPath(pts, w, h),
+                            stroke: pg.group.header.hex
+                        }));
+                    });
+                    svg.appendChild(contourLayer);
+                }
+
+                const labelLayer = svgEl("g", {
+                    id: "group-labels",
+                    "text-anchor": "middle",
+                    "font-family": "Inter, Arial, sans-serif"
+                });
+                model.groups.forEach(pg => {
+                    const x = pg.anchor.x * w,
+                        y = pg.anchor.y * h;
+                    const box = svgEl("g");
+                    box.appendChild(svgEl("rect", {
+                        x: x - 48,
+                        y: y - 25,
+                        width: 96,
+                        height: 50,
+                        rx: 10,
+                        fill: "#FFFEFA",
+                        stroke: "#CFD5D0",
+                        "stroke-width": "1"
+                    }));
+                    box.appendChild(svgEl("text", {
+                        x,
+                        y: y - 5,
+                        fill: "#19251F",
+                        "font-size": "15",
+                        "font-weight": "700"
+                    }, `大类 ${pad(pg.group.index)}`));
+                    box.appendChild(svgEl("text", {
+                        x,
+                        y: y + 13,
+                        fill: "#65716B",
+                        "font-size": "10",
+                        "font-weight": "600"
+                    }, `${pg.group.colors.length} 个小类`));
+                    labelLayer.appendChild(box);
+                });
+                svg.appendChild(labelLayer);
+
+                const axes = svgEl("g", {
+                    id: "umap-axes",
+                    stroke: "#334039",
+                    fill: "#334039",
+                    "stroke-width": "1.8",
+                    "font-family": "Inter, Arial, sans-serif"
+                });
+                axes.appendChild(svgEl("path", { d: "M 45 708 H 135 M 45 708 V 618", fill: "none" }));
+                axes.appendChild(svgEl("path", { d: "M 135 708 L 124 702 L 124 714 Z", stroke: "none" }));
+                axes.appendChild(svgEl("path", { d: "M 45 618 L 39 629 L 51 629 Z", stroke: "none" }));
+                axes.appendChild(svgEl("text", { x: "96", y: "731", stroke: "none", "font-size": "11",
+                    "font-weight": "700" }, "UMAP1"));
+                axes.appendChild(svgEl("text", {
+                    x: "-670",
+                    y: "26",
+                    transform: "rotate(-90)",
+                    stroke: "none",
+                    "font-size": "11",
+                    "font-weight": "700"
+                }, "UMAP2"));
+                svg.appendChild(axes);
+            }
+
+            function renderPalette() {
+                const grid = $("paletteGrid");
+                grid.innerHTML = "";
+                state.groups.forEach(group => {
+                    const card = document.createElement("section");
+                    card.className = "group-card";
+                    const textColor = luminance(group.header.rgb) > .38 ? "#17211D" : "#FFFFFF";
+                    card.innerHTML = `
+                        <div class="group-card-head" style="background:${group.header.hex};color:${textColor}">
+                            <strong>大类 ${pad(group.index)}</strong>
+                            <span>${group.colors.length} COLORS</span>
+                        </div>
+                        <div class="swatch-list"></div>`;
+                    const list = card.querySelector(".swatch-list");
+                    group.colors.forEach(color => {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "swatch";
+                        btn.title = `复制 ${color.hex}`;
+                        btn.innerHTML = `
+                            <span class="swatch-dot" style="background:${color.hex}"></span>
+                            <span class="swatch-meta"><strong>类别 "${color.name}"</strong><span>${color.hex}</span></span>`;
+                        btn.addEventListener("click", () => copyText(color.hex, `${color.hex} 已复制`));
+                        list.appendChild(btn);
+                    });
+                    grid.appendChild(card);
+                });
+                $("paletteMeta").textContent = `${state.groups.length} families · ${state.palette.length} colors`;
+            }
+
+            function toJson() {
+                return JSON.stringify({
+                    name: "UMAP hierarchical palette",
+                    colorSpace: "OKLCH → sRGB",
+                    groups: state.groups.map(g => ({
+                        group: g.index,
+                        familyColor: g.header.hex,
+                        colors: g.colors.map(c => ({
+                            subgroup: c.subgroup,
+                            name: c.key,
+                            hex: c.hex,
+                            rgb: `rgb(${c.rgb.join(", ")})`,
+                            oklch: `oklch(${c.oklch[0].toFixed(3)} ${c.oklch[1].toFixed(3)} ${c.oklch[2].toFixed(1)})`
+                        }))
+                    }))
+                }, null, 2);
+            }
+
+            function toCss() {
+                const lines = [":root {"];
+                state.groups.forEach(group => {
+                    lines.push(`  /* 大类 ${pad(group.index)} */`);
+                    group.colors.forEach(c => lines.push(`  --umap-${c.key}: ${c.hex};`));
+                });
+                lines.push("}");
+                return lines.join("\n");
+            }
+
+            function toPythonDict() {
+                const lines = ["{"];
+                let colorIndex = 0;
+                state.groups.forEach(group => {
+                    lines.push(`    # 大类 ${pad(group.index)}`);
+                    group.colors.forEach((c, index) => {
+                        const isLast = group.index === state.groups.length && index === group.colors.length -
+                        1;
+                        lines.push(`    "${colorIndex++}": "${c.hex}"${isLast ? "" : ","}`);
+                    });
+                });
+                lines.push("}");
+                return lines.join("\n");
+            }
+
+            function toCsv() {
+                const lines = ["group,subgroup,name,hex,r,g,b,oklch_l,oklch_c,oklch_h"];
+                state.palette.forEach(c => lines.push([
+                    c.group, c.subgroup, c.key, c.hex, ...c.rgb,
+                    c.oklch[0].toFixed(4), c.oklch[1].toFixed(4), c.oklch[2].toFixed(2)
+                ].join(",")));
+                return "\uFEFF" + lines.join("\n");
+            }
+
+            function toast(message) {
+                const el = $("toast");
+                el.textContent = message;
+                el.classList.add("show");
+                clearTimeout(toast.timer);
+                toast.timer = setTimeout(() => el.classList.remove("show"), 1700);
+            }
+
+            async function copyText(text, message) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                } catch {
+                    const ta = document.createElement("textarea");
+                    ta.value = text;
+                    ta.style.position = "fixed";
+                    ta.style.opacity = "0";
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand("copy");
+                    ta.remove();
+                }
+                toast(message);
+            }
+
+            function downloadFile(name, content, type) {
+                const blob = new Blob([content], { type });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = name;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 500);
+            }
+
+            function normalizeGroupCount() {
+                const gc = clamp(parseInt($("groupCount").value, 10) || 1, 1, 200);
+                $("groupCount").value = gc;
+                while (state.subCounts.length < gc) state.subCounts.push(1);
+                state.subCounts = state.subCounts.slice(0, gc);
+                return gc;
+            }
+
+            function renderSubcountEditor() {
+                const groupCount = normalizeGroupCount();
+                const editor = $("subcountEditor");
+                const editorColors = buildDistinctGroupColors(groupCount, state.seed);
+                editor.innerHTML = "";
+                for (let i = 0; i < groupCount; i++) {
+                    const row = document.createElement("div");
+                    row.className = "subcount-row";
+                    row.innerHTML = `
+                        <label for="subCount-${i}">
+                            <span class="family-chip" style="--chip:${editorColors[i]?.hex || '#1c6f58'}"></span>
+                            大类 ${pad(i+1)} 的小类数
+                        </label>
+                        <div class="number-wrap">
+                            <input id="subCount-${i}" data-sub-input="${i}" type="number" min="1" max="50"
+                                value="${state.subCounts[i]}" inputmode="numeric" aria-label="大类 ${i+1} 的小类数量">
+                            <div class="stepper">
+                                <button type="button" data-sub-step="${i}" data-delta="1" aria-label="增加大类 ${i+1} 的小类">▲</button>
+                                <button type="button" data-sub-step="${i}" data-delta="-1" aria-label="减少大类 ${i+1} 的小类">▼</button>
+                            </div>
+                        </div>`;
+                    editor.appendChild(row);
+                }
+            }
+
+            function readSubCounts() {
+                const groupCount = normalizeGroupCount();
+                state.subCounts = Array.from({ length: groupCount }, (_, i) => {
+                    const input = $(`subCount-${i}`);
+                    const count = clamp(parseInt(input?.value, 10) || state.subCounts[i] || 1, 1, 50);
+                    if (input) input.value = count;
+                    return count;
+                });
+                return [...state.subCounts];
+            }
+
+            function generate(regenerateColors = true) {
+                const groupCount = normalizeGroupCount();
+                const subCounts = readSubCounts();
+                if (regenerateColors) state.seed = (state.seed + 2654435761) >>> 0;
+                const result = buildPalette(groupCount, subCounts, $("paletteMode").value, state.seed);
+                state.groups = result.groups;
+                state.palette = result.flat;
+                state.plotSeed = (state.plotSeed + 1597334677) >>> 0;
+                state.model = createPlotModel(state.groups, state.plotSeed);
+                renderPalette();
+                drawPlot();
+                $("plotMeta").textContent = `${state.palette.length} clusters · ${state.model.totalPoints.toLocaleString()} points`;
+            }
+
+            document.querySelectorAll("[data-step]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const input = $(btn.dataset.step);
+                    input.value = clamp((parseInt(input.value, 10) || 1) + Number(btn.dataset.delta), Number(input
+                        .min), Number(input.max));
+                    renderSubcountEditor();
+                    generate(false);
+                });
+            });
+
+            $("groupCount").addEventListener("change", () => {
+                renderSubcountEditor();
+                generate(false);
+            });
+            $("subcountEditor").addEventListener("click", event => {
+                const btn = event.target.closest("[data-sub-step]");
+                if (!btn) return;
+                const index = Number(btn.dataset.subStep);
+                const input = $(`subCount-${index}`);
+                input.value = clamp((parseInt(input.value, 10) || 1) + Number(btn.dataset.delta), 1, 50);
+                state.subCounts[index] = Number(input.value);
+                generate(false);
+            });
+            $("subcountEditor").addEventListener("input", event => {
+                const input = event.target.closest("[data-sub-input]");
+                if (!input) return;
+                const index = Number(input.dataset.subInput);
+                input.value = clamp(parseInt(input.value, 10) || 1, 1, 50);
+                state.subCounts[index] = Number(input.value);
+                generate(false);
+            });
+            $("paletteMode").addEventListener("change", () => generate(true));
+            $("showContours").addEventListener("change", drawPlot);
+            $("generateBtn").addEventListener("click", () => generate(true));
+            $("shuffleBtn").addEventListener("click", () => {
+                state.plotSeed = Math.floor(Math.random() * 1e9);
+                state.model = createPlotModel(state.groups, state.plotSeed);
+                $("plotMeta").textContent = `${state.palette.length} clusters · ${state.model.totalPoints.toLocaleString()} points`;
+                drawPlot();
+            });
+            $("copyHexBtn").addEventListener("click", () => copyText(state.palette.map(c => c.hex).join("\n"),
+            "全部 HEX 已复制"));
+            $("copyPythonBtn").addEventListener("click", () => copyText(toPythonDict(), "Python dict 已复制"));
+            $("copyJsonBtn").addEventListener("click", () => copyText(toJson(), "JSON 已复制"));
+            $("copyCssBtn").addEventListener("click", () => copyText(toCss(), "CSS 变量已复制"));
+            $("downloadCsvBtn").addEventListener("click", () => downloadFile("umap_palette.csv", toCsv(),
+                "text/csv;charset=utf-8"));
+            $("downloadJsonBtn").addEventListener("click", () => downloadFile("umap_palette.json", toJson(),
+                "application/json"));
+            $("downloadCssBtn").addEventListener("click", () => downloadFile("umap_palette.css", toCss(),
+            "text/css"));
+            $("svgBtn").addEventListener("click", () => {
+                const source =
+                    `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(svg)}`;
+                downloadFile("umap_palette_preview.svg", source, "image/svg+xml;charset=utf-8");
+                toast("SVG 矢量图已导出");
+            });
+
+            renderSubcountEditor();
+            generate(false);
+        })();
+    </script>
+</body>
+</html>
