@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法定退休年龄计算器2026版</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f0f6fe;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #0b1e33;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 36px;
+            padding: 30px 28px 42px;
+            box-shadow: 0 20px 44px -12px rgba(0,20,50,0.2);
+        }
+        h1 { font-size: 2rem; font-weight: 650; margin-bottom: 4px; }
+        .subhead {
+            color: #2c3e5c;
+            font-size: 0.95rem;
+            border-left: 5px solid #2563eb;
+            padding-left: 16px;
+            margin: -2px 0 28px 0;
+            background: #f2f6fc;
+            padding: 8px 18px;
+            border-radius: 0 14px 14px 0;
+            line-height: 1.7;
+        }
+        .policy-link {
+            color: #0b1e33;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px dashed #94a3b8;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .policy-link:hover {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .card {
+            background: #f8faff;
+            border-radius: 24px;
+            padding: 22px 24px;
+            margin-bottom: 30px;
+            border: 1px solid #e2eaf5;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 16px 20px;
+        }
+        .field-group {
+            flex: 1 1 190px;
+            min-width: 150px;
+        }
+        .field-group label {
+            display: block;
+            font-weight: 550;
+            font-size: 0.85rem;
+            color: #1e3a5f;
+            margin-bottom: 5px;
+        }
+        .field-group input, .field-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ccd8e8;
+            border-radius: 20px;
+            font-size: 1rem;
+            background: white;
+            outline: none;
+            transition: 0.2s;
+        }
+        .field-group input:focus, .field-group select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+        }
+        .btn {
+            background: #0b1e33;
+            color: white;
+            border: none;
+            padding: 12px 34px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .btn:hover { background: #1a3252; transform: scale(1.01); }
+        .result-box {
+            margin-top: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 18px 22px;
+            border: 1px solid #d6e2f0;
+            display: none;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 12px 28px;
+        }
+        .result-box.show { display: flex; }
+        .result-item {
+            background: #f0f5fe;
+            padding: 6px 18px 6px 16px;
+            border-radius: 32px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-item strong { font-weight: 600; color: #0b1e33; }
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 6px;
+            margin: 28px 0 16px;
+            border-bottom: 1px solid #dfe8f3;
+            padding-bottom: 8px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #3b5a7a;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn:hover { background: #e6eefa; color: #0b1e33; }
+        .tab-btn.active { background: #0b1e33; color: white; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid #dfe8f3;
+            background: white;
+            margin-top: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            min-width: 780px;
+        }
+        th {
+            background: #f2f7ff;
+            font-weight: 600;
+            padding: 14px 10px;
+            text-align: left;
+            border-bottom: 2px solid #d0ddee;
+        }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e8eff8;
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        .footnote {
+            margin-top: 22px;
+            font-size: 0.8rem;
+            color: #3b5a7a;
+            background: #f2f7ff;
+            padding: 14px 20px;
+            border-radius: 20px;
+            border-left: 4px solid #2563eb;
+        }
+        .footnote strong { color: #0b1e33; }
+        .gen-badge {
+            display: inline-block;
+            background: #dce7f8;
+            color: #14345c;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0 12px;
+            border-radius: 30px;
+            line-height: 22px;
+            margin-right: 4px;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 18px; }
+            h1 { font-size: 1.6rem; }
+            .btn { width: 100%; justify-content: center; }
+            .flex-row { flex-direction: column; align-items: stretch; }
+            .field-group { min-width: 100%; }
+            .result-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+            table { font-size: 0.7rem; min-width: 600px; }
+            th, td { padding: 6px 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>法定退休年龄计算器</h1>
+    <div class="subhead">
+        <a href="https://www.gov.cn/yaowen/liebiao/202409/content_6974294.htm" target="_blank" rel="noopener noreferrer", class="policy-link">
+            《国务院关于渐进式延迟法定退休年龄的办法》
+        </a><br>
+        * 覆盖1960~2019年出生人群
+    </div>
+
+    <div class="card">
+        <div class="flex-row">
+            <div class="field-group">
+                <label for="birthYear">出生年份</label>
+                <input type="number" id="birthYear" placeholder="例: 1985" min="1960" max="2019" value="1980">
+            </div>
+            <div class="field-group">
+                <label for="gender">性别 · 岗位</label>
+                <select id="gender">
+                    <option value="male">男职工 (原60岁)</option>
+                    <option value="female55">女职工 (原55岁)</option>
+                    <option value="female50" selected>女职工 (原50岁)</option>
+                </select>
+            </div>
+            <div class="field-group" style="flex: 0 0 auto;">
+                <button class="btn" id="calcBtn">查询退休日期</button>
+            </div>
+        </div>
+        <div id="resultBox" class="result-box">
+            <span class="result-item"><strong>法定退休日</strong><span id="retireDate">—</span></span>
+            <span class="result-item"><strong>延迟月数</strong> <span id="delayMonths">—</span></span>
+            <span class="result-item"><strong>弹性区间</strong> <span id="flexRange">—</span></span>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
+        <h2 style="font-size: 1.3rem; font-weight: 500;">📋 完整退休时间表</h2>
+        <span style="font-size: 0.8rem; color: #3b5a7a;">按出生年代分页 · 法定退休年龄</span>
+    </div>
+    <div class="tabs" id="tabContainer">
+        <button class="tab-btn" data-gen="60">60后 (1960-1969)</button>
+        <button class="tab-btn" data-gen="70">70后 (1970-1979)</button>
+        <button class="tab-btn active" data-gen="80">80后 (1980-1989)</button>
+        <button class="tab-btn" data-gen="90">90后 (1990-1999)</button>
+        <button class="tab-btn" data-gen="00">00后 (2000-2009)</button>
+        <button class="tab-btn" data-gen="10">10后 (2010-2019)</button>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>出生年</th>
+                    <th>男职工 (原60岁)</th>
+                    <th>女职工 (原55岁)</th>
+                    <th>女职工 (原50岁)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+    <div class="footnote">
+        <strong>弹性退休说明</strong> 可在法定退休年龄基础上 <strong>提前≤3年</strong>（不低于原法定退休年龄）或 <strong>延迟≤3年</strong>（需单位协商）。<br>
+    </div>
+</div>
+
+<script>
+(function() {
+
+    const START_YEAR = 2025;
+    const START_MONTH = 1;
+    const MIN_YEAR = 1960;
+    const MAX_YEAR = 2019;
+
+    function formatAge(years, months) {
+        if (months === 0) return `${years}岁`;
+        return `${years}岁${months}个月`;
+    }
+
+    function calcForMonth(birthYear, birthMonth, genderType) {
+        let baseAge, maxDelay;
+        let isFemale50 = false;
+        if (genderType === 'male') {
+            baseAge = 60;
+            maxDelay = 36;
+        } else if (genderType === 'female55') {
+            baseAge = 55;
+            maxDelay = 36;
+        } else if (genderType === 'female50') {
+            baseAge = 50;
+            maxDelay = 60;
+            isFemale50 = true;
+        } else {
+            return null;
+        }
+
+        let baseYear = birthYear + baseAge;
+        let baseMonth = birthMonth;
+
+        let monthsDiff = (baseYear - START_YEAR) * 12 + (baseMonth - START_MONTH);
+        let delay = 0;
+        if (monthsDiff > 0) {
+            if (isFemale50) {
+                delay = Math.floor(monthsDiff / 2) + 1;
+            } else {
+                delay = Math.floor(monthsDiff / 4) + 1;
+            }
+            if (delay > maxDelay) delay = maxDelay;
+        }
+
+        let retireYear = baseYear + Math.floor((baseMonth - 1 + delay) / 12);
+        let retireMonth = ((baseMonth - 1 + delay) % 12) + 1;
+
+        let totalMonths = baseAge * 12 + delay;
+        let ageYears = Math.floor(totalMonths / 12);
+        let ageMonths = totalMonths % 12;
+
+        return {
+            retireYear,
+            retireMonth,
+            actualDelay: delay,
+            ageYears,
+            ageMonths
+        };
+    }
+
+    function getRetireRange(birthYear, genderType) {
+        let results = [];
+        for (let m = 1; m <= 12; m++) {
+            let r = calcForMonth(birthYear, m, genderType);
+            if (r) results.push(r);
+        }
+        if (results.length === 0) return null;
+
+        results.sort((a, b) => {
+            if (a.retireYear !== b.retireYear) return a.retireYear - b.retireYear;
+            return a.retireMonth - b.retireMonth;
+        });
+
+        let first = results[0];
+        let last = results[results.length - 1];
+
+        let allAfter2040 = (first.retireYear >= 2040 && last.retireYear >= 2040);
+        let dateStr, ageStr, fullDisplay;
+
+        if (allAfter2040) {
+            if (first.retireYear === last.retireYear) {
+                dateStr = `${first.retireYear}年`;
+                ageStr = formatAge(first.ageYears, 0);
+            } else {
+                dateStr = `${first.retireYear}年～${last.retireYear}年`;
+                ageStr = `${formatAge(first.ageYears, 0)}～${formatAge(last.ageYears, 0)}`;
+            }
+            fullDisplay = `${dateStr}（${ageStr}）`;
+        } else {
+            let startStr = `${first.retireYear}年${String(first.retireMonth).padStart(2, '0')}月`;
+            let endStr = `${last.retireYear}年${String(last.retireMonth).padStart(2, '0')}月`;
+            if (first.retireYear === last.retireYear && first.retireMonth === last.retireMonth) {
+                dateStr = startStr;
+            } else {
+                dateStr = `${startStr} ~ ${endStr}`;
+            }
+            let ageStart = formatAge(first.ageYears, first.ageMonths);
+            let ageEnd = formatAge(last.ageYears, last.ageMonths);
+            if (first.ageYears === last.ageYears && first.ageMonths === last.ageMonths) {
+                ageStr = ageStart;
+            } else {
+                ageStr = `${ageStart} ~ ${ageEnd}`;
+            }
+            fullDisplay = `${dateStr}（${ageStr}）`;
+        }
+
+        let delayRange = (first.actualDelay === last.actualDelay) ?
+            `${first.actualDelay}个月` :
+            `${first.actualDelay}～${last.actualDelay}个月`;
+
+        // 弹性区间
+        let baseAge = 0;
+        if (genderType === 'male') baseAge = 60;
+        else if (genderType === 'female55') baseAge = 55;
+        else if (genderType === 'female50') baseAge = 50;
+
+        let earliest = new Date(first.retireYear, first.retireMonth - 1, 1);
+        earliest.setMonth(earliest.getMonth() - 36);
+        let baseDate = new Date(birthYear + baseAge, 0, 1);
+        if (earliest < baseDate) earliest = new Date(baseDate);
+
+        let latest = new Date(last.retireYear, last.retireMonth - 1, 1);
+        latest.setMonth(latest.getMonth() + 36);
+
+        let flexRange;
+        let eY = earliest.getFullYear(), eM = earliest.getMonth() + 1;
+        let lY = latest.getFullYear(), lM = latest.getMonth() + 1;
+        if (eY >= 2040 && lY >= 2040) {
+            flexRange = `${eY}年 ～ ${lY}年`;
+        } else {
+            flexRange = `${eY}年${String(eM).padStart(2,'0')}月 ～ ${lY}年${String(lM).padStart(2,'0')}月`;
+        }
+
+        return {
+            fullDisplay,
+            delayRange,
+            flexRange,
+            first,
+            last
+        };
+    }
+
+    function getRetireInfo(birthYear, genderType) {
+        if (birthYear < MIN_YEAR || birthYear > MAX_YEAR) return null;
+        return getRetireRange(birthYear, genderType);
+    }
+
+    // ---------- 渲染表格 ----------
+    function generateTableRows(gen) {
+        let startYear, endYear;
+        if (gen === '60') { startYear = 1960; endYear = 1969; }
+        else if (gen === '70') { startYear = 1970; endYear = 1979; }
+        else if (gen === '80') { startYear = 1980; endYear = 1989; }
+        else if (gen === '90') { startYear = 1990; endYear = 1999; }
+        else if (gen === '00') { startYear = 2000; endYear = 2009; }
+        else if (gen === '10') { startYear = 2010; endYear = 2019; }
+        else return [];
+
+        let rows = [];
+        for (let y = startYear; y <= endYear; y++) {
+            let male = getRetireInfo(y, 'male');
+            let f55 = getRetireInfo(y, 'female55');
+            let f50 = getRetireInfo(y, 'female50');
+            rows.push({
+                year: y,
+                male: male ? male.fullDisplay : '-',
+                f55: f55 ? f55.fullDisplay : '-',
+                f50: f50 ? f50.fullDisplay : '-'
+            });
+        }
+        return rows;
+    }
+
+    function renderTable(gen) {
+        const tbody = document.getElementById('tableBody');
+        const rows = generateTableRows(gen);
+        let html = '';
+        rows.forEach(r => {
+            html += `<tr>
+                <td><span class="gen-badge">${r.year}</span></td>
+                <td>${r.male}</td>
+                <td>${r.f55}</td>
+                <td>${r.f50}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    // ---------- 查询 ----------
+    function handleQuery() {
+        const yearInput = document.getElementById('birthYear');
+        let birthYear = parseInt(yearInput.value, 10);
+        const genderSelect = document.getElementById('gender');
+        const genderType = genderSelect.value;
+
+        const resultBox = document.getElementById('resultBox');
+        const retireDateSpan = document.getElementById('retireDate');
+        const delayMonthsSpan = document.getElementById('delayMonths');
+        const flexRangeSpan = document.getElementById('flexRange');
+
+        if (isNaN(birthYear) || birthYear < MIN_YEAR || birthYear > MAX_YEAR) {
+            alert(`请输入${MIN_YEAR}~${MAX_YEAR}之间的出生年份`);
+            return;
+        }
+
+        const info = getRetireInfo(birthYear, genderType);
+        if (!info) {
+            resultBox.classList.remove('show');
+            return;
+        }
+
+        retireDateSpan.textContent = info.fullDisplay;
+        delayMonthsSpan.textContent = info.delayRange;
+        flexRangeSpan.textContent = info.flexRange;
+        resultBox.classList.add('show');
+    }
+
+    // ---------- 分页 ----------
+    function initTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabs.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const gen = this.dataset.gen;
+                renderTable(gen);
+            });
+        });
+    }
+
+    // ---------- 初始化 ----------
+    document.addEventListener('DOMContentLoaded', function() {
+        renderTable('80');
+        initTabs();
+        document.getElementById('calcBtn').addEventListener('click', handleQuery);
+        document.getElementById('birthYear').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleQuery();
+        });
+        document.getElementById('birthYear').value = '1980';
+        document.getElementById('gender').value = 'male';
+        setTimeout(handleQuery, 120);
+    });
+})();
+</script>
+</body>
+</html>
